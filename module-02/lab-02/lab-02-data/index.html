@@ -79,6 +79,13 @@
         .leaflet-popup-content {
             max-width: 160px;   
         }
+        #ui-controls {   
+        margin-left: 10%;
+        }
+#ui-controls label {
+    font-size: 1em;
+    margin-right: 5px;
+}
         
     </style>
 </head>
@@ -137,7 +144,9 @@
                 }          
             }).addTo(map);
             
+            drawLegend();
             drawMap();
+            buildUI();
               
         });
         
@@ -158,7 +167,7 @@
                                 ((props[attribute]/props[norm])*100).toLocaleString()+"%");  
             });
             
-            drawLegend(breaks);
+            updateLegend(breaks);
         }
         
         function getClassBreaks() {
@@ -195,32 +204,46 @@
             }
         }
         
-        function drawLegend(breaks) {
+        function drawLegend() {
             
             var legend = L.control({position: 'topleft'});
 
             legend.onAdd = function () {
                 
                 var div = L.DomUtil.create('div', 'legend');
-                
-                div.innerHTML = "<h3>" + attribute + " per " + norm + "</h3>"; 
-
-                for (var i = 0; i < breaks.length; i++) {
-            
-                    var color = getColor(breaks[i][0], breaks);
-                    
-                    div.innerHTML +=
-                        '<span style="background:' + color + '"></span> ' +
-                        '<label>'+(breaks[i][0]*100).toLocaleString() + ' &mdash; ' + 
-                        (breaks[i][1]*100).toLocaleString() + '</label>';
-                }
                
                 return div;
-                
-                    
+                      
             };
+            
+             legend.addTo(map);
+        }
+            
+            function updateLegend(breaks) {
+            
+            var legend = $('.legend')    
 
-            legend.addTo(map);
+            legend.HTML("<h3>" + attribute + " per " + norm + "</h3>"); 
+
+            for (var i = 0; i <= breaks.length-1; i++) {
+
+                var color = getColor(breaks[i][0], breaks);
+
+                legend.append(
+                    '<span style="background:' + color + '"></span> ' +
+                    '<label>'+(breaks[i][0]*100).toLocaleString() + ' &mdash; ' + 
+                    (breaks[i][1]*100).toLocaleString() + '</label>');
+            }
+
+}
+        
+        function buildUI() {
+            $('select[id="occupied"]').change(function() {
+            attribute = $(this).val();
+            drawMap();
+
+            }); 
+            
         }
 
     </script>

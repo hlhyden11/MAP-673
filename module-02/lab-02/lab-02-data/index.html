@@ -210,8 +210,8 @@
                     $(".info").show();
                     //show the info window    
                     //create event listener for each county
-                $(".info").mouseover(function(){
-    $(".info").css("background-color", "gray");
+                //$(".info").mouseover(function(){
+    //$(".info").css("background-color", "gray");
 
                     updateInfo(layer); //call updateInfo function
 
@@ -222,14 +222,15 @@
 
                 }); //hide when mousing out of state map
 
-            $(".info").mouseout(function(){
-    $(".info").css("background-color", "gray");
-            });
+            //$(".info").mouseout(function(){
+    //$(".info").css("background-color", "gray");
+            //});
                 
 
             updateLegend(breaks);
                     
                 });
+        }
            
 
         function drawInfo() {

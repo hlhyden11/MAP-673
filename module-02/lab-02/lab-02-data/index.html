@@ -149,7 +149,9 @@
             "VACANT_FOR": "Vacant units for rent",
             "VACANT_FO2": "Vacant units for sale only",
             "VACANT_MIG": "Vacant units used for migratory workers"
+
         }
+
         var options = {
             center: [37.8, -85.8],
             zoom: 7.4,
@@ -159,13 +161,17 @@
             zoomControl: false
         }
         var map = L.map('map', options);
+
         map.addControl(L.control.zoom({
             position: 'topright'
         }));
+
         var dataLayer,
             attribute = "VACANT",
             norm = "TOTAL";
+
         $.getJSON("ky_counties_housing.json", function (data) {
+
             dataLayer = L.geoJson(data, {
                 style: function (feature) {
                     return {
@@ -176,80 +182,113 @@
                     };
                 }
             }).addTo(map);
+
             buildUI(); //call function to draw the UI control
             drawLegend(); //call the function to draw the legend
             drawMap(); // call function to draw map
+
             drawInfo(); //call the function to draw the info window
+
         });
+
         function drawMap() {
+
             var breaks = getClassBreaks();
+
             dataLayer.eachLayer(function (layer) {
+
                 var props = layer.feature.properties;
+
                 layer.setStyle({
                     fillColor: getColor(props[attribute] /
                         props[norm], breaks)
                 });
                 layer.bindPopup("<b>" + props["NAME"] + " County</b></br>" + labels[attribute] + ": " +
                     ((layer.feature.properties[attribute] / layer.feature.properties[norm]) * 100).toLocaleString() + "%");
+
                 layer.on('mouseover', function () {
                     $(".info").show();
                     //show the info window    
                     //create event listener for each county
                 $(".info").mouseover(function(){
     $(".info").css("background-color", "gray");
+
                     updateInfo(layer); //call updateInfo function
+
                 });
+
                 dataLayer.on('mouseout', function () {
                     $(".info").hide();
+
                 }); //hide when mousing out of state map
+
             $(".info").mouseout(function(){
     $(".info").css("background-color", "gray");
             });
                 
+
             updateLegend(breaks);
                     
                 });
            
+
         function drawInfo() {
             //creating an info window
+
             var info = L.control({
                 position: 'topright'
             })
                 
             info.onAdd = function (map) {
                 //declaring the function
+
                 var div = L.DomUtil.create('div', 'info');
+
                 return div;
+
             }
             info.addTo(map);
             $(".info").hide //hide info window when not scrolling over the map. 
         }
+
         function updateInfo(layer) {
             //update (or insert) content into this empty info window element when user mouses over a county.accept one argument: the specific layer (or county) we're hovering over.  
+
             var props = layer.feature.properties;
             //Within the function's body, the first statement declares the variable props and assigns it the properties object of the layer we want information about
+
             var html = "<h3>" + props['NAME'] + " County</h3>" +
                 "total # Vacant: <b>" + props["VACANT"] + "</b><br>" +
                 "# Vacant for Sale: <b>" + props["VACANT_FO2"] + "</b><br>" +
                 "# Vacant for Rent: <b>" + props["VACANT_FOR"] + "</b><br>" +
                 "# Vacant used for Migratory Workers : <b>" + props["VACANT_MIG"] + "</b>"
                 //declare another variable named html and include concatenated string information about that county.
+
             $(".info").html(html);
             //use JQuery to select the div using its class 'info' and insert the string content into using the .html() method
         }
+
         function getClassBreaks() {
+
             var values = [];
+
             dataLayer.eachLayer(function (layer) {
                 var value = layer.feature.properties[attribute] / layer.feature.properties[norm];
                 values.push(value);
             });
+
             var clusters = ss.ckmeans(values, 5);
+
             var breaks = clusters.map(function (cluster) {
                 return [cluster[0], cluster.pop()];
             });
+
             return breaks;
+
         }
+
         function getColor(d, breaks) {
+
             if (d <= breaks[0][1]) {
                 return '#f1eef6';
             } else if (d <= breaks[1][1]) {
@@ -262,36 +301,55 @@
                 return '#045a8d'
             }
         }
+
         function drawLegend() {
+
             var legend = L.control({
                 position: 'topleft'
             });
+
             legend.onAdd = function () {
+
                 var div = L.DomUtil.create('div', 'legend');
+
                 return div;
+
             };
+
             legend.addTo(map);
         }
+
         function updateLegend(breaks) {
+
             var legend = $('.legend').html("<h3>" + labels[attribute] + "</h3><ul>"); //use JQuery to select legend class for DOM event and .html to style the label variables. 
+
             //legend.html("<h3>" + attribute + " per " + norm + "</h3>");
+
             for (var i = 0; i <= breaks.length - 1; i++) {
+
                 var color = getColor(breaks[i][0], breaks);
+
                 legend.append(
                     '<span style="background:' + color + '"></span> ' +
                     '<label>' + (breaks[i][0] * 100).toLocaleString() + ' &mdash; ' +
                     (breaks[i][1] * 100).toLocaleString() + '</label>');
             }
+
         }
+
         function buildUI() {
             $('select[id="Vacant"]').change(function () {
                 attribute = $(this).val();
                 //select our #ui-controls and add an event listener for when user makes changes to attributes, "this" is the context of the event. The .val() method is primarily used to get the values of form elements (in this case the UI elements for "Vacant").
                 drawMap();
                 //redraw the map
+
             });
+
         }
             
     </script>
+
 </body>
+
 </html>

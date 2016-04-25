@@ -63,7 +63,6 @@
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
             border-radius: 5px;
         }
-        
         .legend h3 {
             font-size: 1.1em;
             font-weight: normal;
@@ -121,18 +120,15 @@
         <h1>Map Title</h1>
         <h2>Map Subtitle</h2>
     </header>
-
     <div id='ui-controls'>
         <label>Choose a data attribute:</label>
         <select id="Vacant">
-            <option value="VACANT_FOR" selected>vacant units for rent</option>
+            <option value="VACANT_FOR" selected>vacant units for rent</option> */default selection when map loads*/
             <option value="VACANT_MIG">vacant units used for migratory workers</option>
             <option value="VACANT_FO2">vacant units, for sale only</option>
         </select>
     </div>
     <!-- end ui-controls -->
-
-    <div id='map'></div>
 
     <div id='map'></div>
 
@@ -144,6 +140,7 @@
     </footer>
 
     <script>
+        // define labels
         var labels = {
             "VACANT": "Vacant units",
             "VACANT_FOR": "Vacant units for rent",
@@ -151,7 +148,7 @@
             "VACANT_MIG": "Vacant units used for migratory workers"
 
         }
-
+        // set initial options for the map
         var options = {
             center: [37.8, -85.8],
             zoom: 7.4,
@@ -160,20 +157,24 @@
             dragging: false, //added additional options
             zoomControl: false
         }
+        // create a new Leaflet map, passing map options, and assign to variable
         var map = L.map('map', options);
 
-        map.addControl(L.control.zoom({
-            position: 'topright'
-        }));
+        //map.addControl(L.control.zoom({
+           // position: 'topright'
+       // }));
 
-        var dataLayer,
-            attribute = "VACANT",
-            norm = "TOTAL";
+        
+        var dataLayer, //declare global variable
+            attribute = "VACANT", //attribute assigned
+            norm = "TOTAL"; //normalizing data attribute assigned
 
+        // QJuery AJAX request to load external GEoJSON file
         $.getJSON("ky_counties_housing.json", function (data) {
 
+        // create Leaflet GeoJson layer with GeoJSON data and assign to global variable
             dataLayer = L.geoJson(data, {
-                style: function (feature) {
+                style: function (feature) { // style each feature of GeoJson layer
                     return {
                         color: '#dddddd',
                         weight: 2,
@@ -181,7 +182,7 @@
                         fillColor: '#1f78b4'
                     };
                 }
-            }).addTo(map);
+            }).addTo(map); // add the Leaflet GeoJson layer to the map
 
             buildUI(); //call function to draw the UI control
             drawLegend(); //call the function to draw the legend
@@ -192,26 +193,48 @@
         });
 
         function drawMap() {
+            // call function to determine class breaks and assign return value to variable
 
             var breaks = getClassBreaks();
 
+            // loop through each layer of the GeoJson layer
             dataLayer.eachLayer(function (layer) {
-
+                
+            //create a mouseover event
+            layer.on('mouseover', function (){
+                    
+                updateInfo(this); //apply mouseover when the updateInfo function is called.  
+                this.setStyle({ //this is used to reference the context of selecting the layer. setStyle creates styling for the mouseover event. 
+                weight: 5,
+                fillColor: 'blue',
+                fillOpacity: 0.7
+    })
+                });
+                
+            layer.on('mouseout', function (){ //repeat as above except with 'mouseout'
+                
+                this.setStyle({
+                weight: 5,
+                fillColor: 'green',
+                fillOpacity: 0.7    
+                })
+            });    
+                // create shorthand variable to access layer properties
                 var props = layer.feature.properties;
 
+                 // change the fill color of the layer using the layer's attribute values
                 layer.setStyle({
                     fillColor: getColor(props[attribute] /
                         props[norm], breaks)
                 });
+                //create the pop up
                 layer.bindPopup("<b>" + props["NAME"] + " County</b></br>" + labels[attribute] + ": " +
                     ((layer.feature.properties[attribute] / layer.feature.properties[norm]) * 100).toLocaleString() + "%");
 
                 layer.on('mouseover', function () {
                     $(".info").show();
-                    //show the info window    
-                    //create event listener for each county
-                //$(".info").mouseover(function(){
-    //$(".info").css("background-color", "gray");
+                    //use JQuery to show the info window when mouseover event occurs   
+                    //
 
                     updateInfo(layer); //call updateInfo function
 
@@ -220,14 +243,9 @@
                 dataLayer.on('mouseout', function () {
                     $(".info").hide();
 
-                }); //hide when mousing out of state map
+                }); //use JQuery to hide info windown when mousing out of state map
 
-            //$(".info").mouseout(function(){
-    //$(".info").css("background-color", "gray");
-            //});
-                
-
-            updateLegend(breaks);
+                updateLegend(breaks); //call the updateLegend function
                     
                 });
         }
@@ -238,13 +256,13 @@
 
             var info = L.control({
                 position: 'topright'
-            })
+            }) //assign info variable position rules
                 
             info.onAdd = function (map) {
                 //declaring the function
 
                 var div = L.DomUtil.create('div', 'info');
-
+                //create div variable to dynamically change styling and interaction for info window 
                 return div;
 
             }
@@ -271,25 +289,33 @@
 
         function getClassBreaks() {
 
+            // create empty array to hold range of data values
             var values = [];
 
+            // loop through each layer
             dataLayer.eachLayer(function (layer) {
+            // calculate the normalized value of the layer's data attribute    
                 var value = layer.feature.properties[attribute] / layer.feature.properties[norm];
+            // push that value into the array    
                 values.push(value);
             });
 
+             // use simple statistics to create 5 class ranges (5 arrays of values)
             var clusters = ss.ckmeans(values, 5);
 
+            // JS map method returns an array of the low and high values from each cluster
             var breaks = clusters.map(function (cluster) {
                 return [cluster[0], cluster.pop()];
             });
-
+//return array of arrays, e.g., [[0.24,0.25], [0.26, 0.37], etc]
             return breaks;
 
         }
 
         function getColor(d, breaks) {
-
+     // function accepts a single normalized data attribute value 
+    // and uses a series of conditional statements to determine which 
+    // which color value to return to return to the function caller        
             if (d <= breaks[0][1]) {
                 return '#f1eef6';
             } else if (d <= breaks[1][1]) {
@@ -305,13 +331,16 @@
 
         function drawLegend() {
 
+            // create a new Leaflet control object, and position it top left
             var legend = L.control({
                 position: 'topleft'
             });
 
+            // when the legend is added to the map
             legend.onAdd = function () {
 
-                var div = L.DomUtil.create('div', 'legend');
+            // create a new HTML <div> element and give it a class name of "legend"
+            var div = L.DomUtil.create('div', 'legend');
 
                 return div;
 
@@ -324,12 +353,14 @@
 
             var legend = $('.legend').html("<h3>" + labels[attribute] + "</h3><ul>"); //use JQuery to select legend class for DOM event and .html to style the label variables. 
 
-            //legend.html("<h3>" + attribute + " per " + norm + "</h3>");
-
             for (var i = 0; i <= breaks.length - 1; i++) {
 
+        // determine the color associated with each break value,
+        // including the lower range value
                 var color = getColor(breaks[i][0], breaks);
 
+        // concatenate a <span> tag styled with the color and include the range values
+        // of that particular classification group
                 legend.append(
                     '<span style="background:' + color + '"></span> ' +
                     '<label>' + (breaks[i][0] * 100).toLocaleString() + ' &mdash; ' +

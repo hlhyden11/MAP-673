@@ -200,6 +200,9 @@
             // loop through each layer of the GeoJson layer
             dataLayer.eachLayer(function (layer) {
                 
+            // create shorthand variable to access layer properties
+            var props = layer.feature.properties;
+                
             //create a mouseover event
             layer.on('mouseover', function (){
                     
@@ -215,12 +218,12 @@
                 
                 this.setStyle({
                 weight: 5,
-                fillColor: 'green',
+                fillColor: getColor(props[attribute] /
+                        props[norm], breaks),
                 fillOpacity: 0.7    
                 })
             });    
-                // create shorthand variable to access layer properties
-                var props = layer.feature.properties;
+
 
                  // change the fill color of the layer using the layer's attribute values
                 layer.setStyle({

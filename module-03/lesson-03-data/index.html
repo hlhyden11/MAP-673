@@ -102,24 +102,9 @@
 <body>
     <h1>Map Title Goes Here</h1>
     <div id='map'></div>
-    <div id='ui-controls'>
-        <label><span class="min">2001</span><span class="max">2013</span>
-        <input type="range" min = "2001", max= "2013", 
-               value = "2001", step= "1", class="year-slider"></input>
-        </label>
-    </div>
-    
 
     <script>
         // instantiate the Leaflet map
-        
-        var labels = {
-            "VACANT": "Vacant units",
-            "VACANT_FOR": "Vacant units for rent",
-            "VACANT_FO2": "Vacant units for sale only",
-            "VACANT_MIG": "Vacant units used for migratory workers"
-
-        }
         
         var options = {
             center: [38.2, -94],
@@ -131,81 +116,80 @@
         }
         var map = L.map('map', options);
 
-        var tiles = L.tileLayer('http://tile.stamen.com/toner-background/{z}/{x}/{y}.{ext}', {
-            attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. &mdash; Map data &copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a>',
-            subdomains: 'abcd',
-            minZoom: 4,
-            maxZoom: 6,
-            ext: 'png'
+        var tiles = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-background/{z}/{x}/{y}.{ext}', {
+			attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+			subdomains: 'abcd',
+			minZoom: 0,
+			maxZoom: 20,
+			ext: 'png'
         });
+        
         map.addLayer(tiles);// load map tiles and add to map
 
-        var dataLayer, //declare global variable
-            attribute = "2001";// declare global variables
+        //declare global variable
+           // attribute = "2001";// declare global variables
 
-        $.getJSON("us-states.json", function (states) {
+            $.getJSON('us-states.json', function (states) {
+			Papa.parse('states-unemployment.csv', {
+				download: true,
+				header: true,
+				complete: function (data) {
+					processData(states, data);
+				}
+			})
+		});
+		// function to process/bind data
+		function processData(states, data) {
+			for (var state in states.features) {
+				var props = states.features[state].properties;
+				for (d in data.data) {
+					if (props.STATEFP === data.data[d].STATE_FIP) {
+						states.features[state].properties = data.data[d];
+					}
+				}
+			}
+			//createSliderUI();
+			//drawLegend();
+			drawMap(states);
+			//drawInfo();
+		}
+		// function to draw the map
+		function drawMap(states) {
+			dataLayer = L.geoJson(states, {
+				style: function (feature) {
+					return {
+						color: 'blue',
+						weight: 2,
+						fillOpacity: 1,
+						fillColor: 'blue'
+					}
+				}
+			
+                    
+			}).addTo(map)
+			
+			
+			updateMap()
+		}
 
-            Papa.parse('states-unemployment.csv', {
-                download: true,
-                header: true,
-                complete: function (data) {
 
-                    processData(states, data)        
-
-                }// AJAX requests to load data files
-            });
-
-        }); 
-
-        function processData(states, data) {
-
-            for (var state in states.features) {
-
-                var props = states.features[state].properties; // inner for loop is complete
-
-                for (var d in data.data) {
-                    console.log(props.STATEFP, data.data[d].STATE_FIP); {
-                        states.features[state].properties = data.data[d];
-                        break;
-                    }
-                } 
-
-            } // outer for loop is complete
-             //call function to draw the UI control
-            drawLegend(); //call the function to draw the legend
-            drawMap(states); // call function to draw map
-            updateMap(states);
-
-        }// function to process/bind data
-
-        function drawMap(states) {
-            // call function to determine class breaks and assign return value to variable
+     
+          
             
-              dataLayer = L.geoJson(states, {
-                style: function (feature) { // style each feature of GeoJson layer
-                    return {
-                        color: 'black',
-                        weight: 1,
-                        fillOpacity: 1,
-                        fillColor: '#800080'
-                    };
-                }
-            }).addTo(map); // add the Leaflet GeoJson layer to the map
-            
-        }
-            
-        function updateMap(states) {    
+   /*     function updateMap(states) {    
 
-            var breaks = getClassBreaks();
+            //var breaks = getClassBreaks();
 
             // loop through each layer of the GeoJson layer
             dataLayer.eachLayer(function (layer) {
                 
-            var props = layer.feature.properties;
+           // var props = layer.feature.properties;
 
                  // change the fill color of the layer using the layer's attribute values
                 layer.setStyle({
-                    fillColor: getColor(props[attribute],breaks)
+                    fillColor: white
+                    
+                    //getColor(props[attribute],breaks)
                 });
             });
             
@@ -297,10 +281,11 @@
                     (breaks[i][1]).toLocaleString() + '</label>');
             }
 
-        }
+       }*/
     // function to update the legend
 
         // function to create the range slider
+            
     </script>
 
 </body>

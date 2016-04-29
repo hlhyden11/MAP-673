@@ -9,6 +9,7 @@
     <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
     <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/1.0.0/simple_statistics.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.1.2/papaparse.min.js"></script>
 
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
     <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
@@ -46,6 +47,46 @@
             bottom: 0;
         }
         
+         .legend {
+            padding: 6px 8px;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+        .legend h3 {
+            font-size: 1.1em;
+            font-weight: normal;
+            color: #001323;
+            margin: 0 0 10px 0;
+        }
+        
+        .legend span {
+            width: 20px;
+            height: 20px;
+            float: left;
+            margin: 0 10px 4px 0;
+        }
+        
+        .legend label {
+            font-size: 1.1em;
+        }
+        
+        .legend label:after {
+            content: '';
+            display: block;
+            clear: both;
+        }
+        
+        #ui-controls {
+            margin-left: 10%;
+        }
+        
+        #ui-controls label {
+            font-size: 1em;
+            margin-right: 5px;
+        }
+        
         footer {
             padding: 6px 10%;
             width: 80%;
@@ -61,9 +102,25 @@
 <body>
     <h1>Map Title Goes Here</h1>
     <div id='map'></div>
+    <div id='ui-controls'>
+        <label><span class="min">2001</span><span class="max">2013</span>
+        <input type="range" min = "2001", max= "2013", 
+               value = "2001", step= "1", class="year-slider"></input>
+        </label>
+    </div>
+    
 
     <script>
         // instantiate the Leaflet map
+        
+        var labels = {
+            "VACANT": "Vacant units",
+            "VACANT_FOR": "Vacant units for rent",
+            "VACANT_FO2": "Vacant units for sale only",
+            "VACANT_MIG": "Vacant units used for migratory workers"
+
+        }
+        
         var options = {
             center: [38.2, -94],
             zoom: 4,
@@ -73,34 +130,175 @@
             zoomControl: true
         }
         var map = L.map('map', options);
+
         var tiles = L.tileLayer('http://tile.stamen.com/toner-background/{z}/{x}/{y}.{ext}', {
-            attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>',
+            attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. &mdash; Map data &copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a>',
             subdomains: 'abcd',
             minZoom: 4,
             maxZoom: 6,
             ext: 'png'
         });
-        map.addLayer(tiles);
+        map.addLayer(tiles);// load map tiles and add to map
 
-        // load map tiles and add to map
+        var dataLayer, //declare global variable
+            attribute = "2001";// declare global variables
 
-        // declare global variables
+        $.getJSON("us-states.json", function (states) {
 
-        // AJAX requests to load data files
+            Papa.parse('states-unemployment.csv', {
+                download: true,
+                header: true,
+                complete: function (data) {
 
-        // function to process/bind data
+                    processData(states, data)        
 
-        // function to draw the map
+                }// AJAX requests to load data files
+            });
 
-        // function to update the map
+        }); 
 
-        // function get the class breaks   
+        function processData(states, data) {
 
-        // function to get the color value
+            for (var state in states.features) {
 
-        // function to draw the legend
+                var props = states.features[state].properties; // inner for loop is complete
 
-        // function to update the legend
+                for (var d in data.data) {
+                    console.log(props.STATEFP, data.data[d].STATE_FIP); {
+                        states.features[state].properties = data.data[d];
+                        break;
+                    }
+                } 
+
+            } // outer for loop is complete
+             //call function to draw the UI control
+            drawLegend(); //call the function to draw the legend
+            drawMap(states); // call function to draw map
+            updateMap(states);
+
+        }// function to process/bind data
+
+        function drawMap(states) {
+            // call function to determine class breaks and assign return value to variable
+            
+              dataLayer = L.geoJson(states, {
+                style: function (feature) { // style each feature of GeoJson layer
+                    return {
+                        color: 'black',
+                        weight: 1,
+                        fillOpacity: 1,
+                        fillColor: '#800080'
+                    };
+                }
+            }).addTo(map); // add the Leaflet GeoJson layer to the map
+            
+        }
+            
+        function updateMap(states) {    
+
+            var breaks = getClassBreaks();
+
+            // loop through each layer of the GeoJson layer
+            dataLayer.eachLayer(function (layer) {
+                
+            var props = layer.feature.properties;
+
+                 // change the fill color of the layer using the layer's attribute values
+                layer.setStyle({
+                    fillColor: getColor(props[attribute],breaks)
+                });
+            });
+            
+            updateLegend(breaks);
+            
+        }
+                
+             // function to draw the map 
+                
+            // function to update the map    
+                
+        function getClassBreaks() {
+
+            // create empty array to hold range of data values
+            var values = [];
+
+            // loop through each layer
+             dataLayer.eachLayer(function (layer) {
+                //attributes are strings - convert to float
+                var value = parseFloat(layer.feature.properties[attribute]);
+                values.push(value);
+            });
+            var clusters = ss.quantile(values, [0, 0.2, 0.4, 0.6, 0.8, 1]);
+            var breaks = [];
+            for (var i = 0; i < clusters.length - 1; i++) {
+                breaks.push([clusters[i], clusters[i + 1]])
+                console.log(breaks);
+            }
+// JS map method returns an array of the low and high values from each cluster
+           
+//return array of arrays, e.g., [[0.24,0.25], [0.26, 0.37], etc]
+            return breaks;
+
+        } // function get the class breaks 
+
+        function getColor(d, breaks) {
+     // function accepts a single normalized data attribute value 
+    // and uses a series of conditional statements to determine which 
+    // which color value to return to return to the function caller        
+              if (d <= breaks[0][1]) {
+                return '#edf8fb';
+            } else if (d <= breaks[1][1]) {
+                return '#b3cde3';
+            } else if (d <= breaks[2][1]) {
+                return '#8c96c6';
+            } else if (d <= breaks[3][1]) {
+                return '#8856a7'
+            } else if (d <= breaks[4][1]) {
+                return '#810f7c'
+            }
+        }
+
+        function drawLegend() {
+
+            // create a new Leaflet control object, and position it top left
+            var legend = L.control({
+                position: 'topleft'
+            });
+
+            // when the legend is added to the map
+            legend.onAdd = function () {
+
+            // create a new HTML <div> element and give it a class name of "legend"
+            var div = L.DomUtil.create('div', 'legend');
+
+                return div;
+
+            };
+
+            legend.addTo(map);
+        } // function to draw the legend
+                
+        function updateLegend(breaks) {
+
+            var legend = $('.legend');
+            legend.html("<h3>" + "Unemployment Rate by State " + attribute + "</h3>"); //use JQuery to select legend class for DOM event and .html to style the label variables. 
+
+            for (var i = 0; i <= breaks.length - 1; i++) {
+
+        // determine the color associated with each break value,
+        // including the lower range value
+                var color = getColor(breaks[i][0], breaks);
+
+        // concatenate a <span> tag styled with the color and include the range values
+        // of that particular classification group
+                legend.append(
+                    '<span style="background:' + color + '"></span> ' +
+                    '<label>' + (breaks[i][0]).toLocaleString() + ' &mdash; ' +
+                    (breaks[i][1]).toLocaleString() + '</label>');
+            }
+
+        }
+    // function to update the legend
 
         // function to create the range slider
     </script>

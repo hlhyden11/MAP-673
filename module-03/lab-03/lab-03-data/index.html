@@ -132,10 +132,10 @@
 </head>
 
 <body>
-    <h1>Map Title Goes Here</h1>
+    <h1>Unemployment from 2000-2013 in Kentucky by County</h1>
     <div id="ui-controls">
         <label><span class="min">2001</span><span class="max">2013</span>
-            <input type="range" min="2001" , max="2013" , value="2001" , step="1" , class="year-slider"></input>
+            <input type="range" min="2000" , max="2013" , value="2000" , step="1" , class="year-slider"></input>
         </label>
     </div>
     <div id='map'></div>
@@ -160,35 +160,35 @@
         });
         map.addLayer(tiles);
         var dataLayer; //declare global variable
-        var attribute = 2001 //attribute assigned
+        var attribute = 2000 //attribute assigned
         
-        $.getJSON('ky-counties.json', function (states) {
-            Papa.parse('ky-unemployment-data.csv', {
+        $.getJSON('ky-counties.json', function (states) { //use AJAX to access json file
+            Papa.parse('ky-unemployment-data.csv', { //use papa.parse to bring in csv file
                 download: true,
                 header: true,
                 complete: function (data) {
-                    processData(states, data);
+                    processData(states, data); //call function with states and data as arguments
                 }
             })
         });
-        //function to process/bind data
+        //function to process/bind the Ky-counties file with the ky-unemployment csv file. Like a join in Arc/QGIS but on the back end. 
         function processData(states, data) {
             for (var state in states.features) {
                 var props = states.features[state].properties;
                 for (var d in data.data) {
                     if (props.COUNTY_FIP == data.data[d].CNTY) {
                         states.features[state].properties = data.data[d];
-                        break;
+                        break; //COUNTY_FIP from json file joined with CNTY column from csv.
                     }
                 }
             }
-            createSliderUI();
+            createSliderUI(); 
             drawLegend();
             drawMap(states);
-            drawInfo()
+            drawInfo() //Call each function 
         }
         
-       function drawMap(states) {
+       function drawMap(states) { 
             dataLayer = L.geoJson(states, {
                 style: function (feature) {
                     return {
@@ -233,27 +233,26 @@
                     });
                 });
             });
-            updateLegend(breaks);
+            updateLegend(breaks); //call updateLegend function and pass breaks as argument
         }
         function getClassBreaks() {
             // create empty array to hold range of data values
             var values = [];
             // loop through each layer
             dataLayer.eachLayer(function (layer) {
-                //attributes are strings - convert to float
                 var value = Number(layer.feature.properties[attribute]);
                 values.push(Number(value));
             });
             values.sort(function (a, b) {
                 return a - b;
             });
-            console.log(values);
-            var breaks = ss.quantile(values, [0, 0.2, 0.4, 0.6, 0.8, 1]);
-            return breaks;
+            var breaks = ss.quantile(values, [0, 0.2, 0.4, 0.6, 0.8, 1]); //use simple statistics quantile method to create breaks
+            return breaks; //return class breaks
+            
         } // function get the class breaks 
         function getColor(d, breaks) {
-            //            console.log(breaks);
-            //            use the input value of the current layer and return a specific color if it falls within the range of each breaks value.
+        
+            // use the input value of the current layer and return a specific color if it falls within the range of each breaks value.
             if (d <= breaks[1]) {
                 return '#edf8fb';
             } else if (d <= breaks[2]) {
@@ -309,7 +308,7 @@
                     updateMap();
                 })
         }
-        function drawInfo() { //function to create infobox..empty one
+        function drawInfo() { //function to create infobox
             var info = L.control({
                 position: 'bottomright'
             });
@@ -317,11 +316,12 @@
                 var div = L.DomUtil.create('div', 'info'); //giving div element a class of info
                 return div; //return to add to map
             }
-            info.addTo(map);
+            info.addTo(map); //add the infobox to the map
         }
         function updateInfo(layer) {
-            var props = layer.feature.properties;
-            var html = "<h3>" + layer.feature.properties['COUNTY_FIP'] + " </h3>" +
+            var props = layer.feature.properties; //create labels
+            var html = "<h3>" + props["NAME"] +" County </h3>" + //use props["NAME"] to access county names
+                "2000: <b>" + props[2000] + "%</b><br>" +
                 "2001: <b>" + props[2001] + "%</b><br>" +
                 "2002: <b>" + props[2002] + "%</b><br>" +
                 "2003: <b>" + props[2003] + "%</b><br>" +

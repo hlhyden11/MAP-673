@@ -223,6 +223,9 @@
                     layer.setStyle({
                         color: '#FFFF00'
                     }).bringToFront();
+                    layer.bindPopup("<b>" + props["NAME"] + " County</b></br>" +
+                    attribute + ":  " +
+                    ((props[attribute])).toLocaleString());
                 });
                 //shows infobox when county moused over
                 layer.on('mouseover', function () {

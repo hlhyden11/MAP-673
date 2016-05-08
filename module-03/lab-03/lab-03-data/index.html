@@ -64,10 +64,12 @@
             color: whitesmoke;
             margin: 5px;
         }
-        
+        .legend ul {
+            padding: 0;
+        }
         .legend li {
             list-style-type: none;
-            height: 40px;
+            height: 24px;
         }
         
         .legend span {
@@ -122,6 +124,8 @@
             border-radius: 5px;
             text-align: left;
             color: whitesmoke;
+            width: 80px;
+            text-align: right;
         }
         
         label {
@@ -132,10 +136,10 @@
 </head>
 
 <body>
-    <h1>Map Title Goes Here</h1>
+    <h1>Unemployment Rates in Kentucky: 2001 &ndash; 2013</h1>
     <div id="ui-controls">
         <label><span class="min">2001</span><span class="max">2013</span>
-            <input type="range" min="2001" , max="2013" , value="2001" , step="1" , class="year-slider"></input>
+            <input type="range" min="2001" , max="2013" , value="2001" , step="1" , class="year-slider">
         </label>
     </div>
     <div id='map'></div>
@@ -219,6 +223,9 @@
                     layer.setStyle({
                         color: '#FFFF00'
                     }).bringToFront();
+                    layer.bindPopup("<b>" + props["NAME"] + " County</b></br>" +
+                    attribute + ":  " +
+                    ((props[attribute])).toLocaleString());
                 });
                 //shows infobox when county moused over
                 layer.on('mouseover', function () {
@@ -229,7 +236,7 @@
                     $(".info").hide();
                     //reset county outline to black when mousedout
                     layer.setStyle({
-                        color: 'whitesmoke'
+                        color: 'blue'
                     });
                 });
             });
@@ -285,7 +292,7 @@
                 //get color for each
                 var color = getColor(breaks[i + 1], breaks);
                 //append a list item to the legend
-                legend.append('<li><span style="background:' + color + '"></span> ' +
+               $('.legend ul').append('<li><span style="background:' + color + '"></span> ' +
                     (breaks[i]).toLocaleString() + ' &mdash; ' +
                     (breaks[i + 1]).toLocaleString() + '</li>');
             }
@@ -321,7 +328,7 @@
         }
         function updateInfo(layer) {
             var props = layer.feature.properties;
-            var html = "<h3>" + layer.feature.properties['COUNTY_FIP'] + " </h3>" +
+            var html = "<h3>" + layer.feature.properties.NAME + " </h3>" +
                 "2001: <b>" + props[2001] + "%</b><br>" +
                 "2002: <b>" + props[2002] + "%</b><br>" +
                 "2003: <b>" + props[2003] + "%</b><br>" +

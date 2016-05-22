@@ -34,7 +34,7 @@
             <script>
                 // instantiate our map
                 var map = new L.Map("map", {
-                    center: [40, -104],
+                    center: [5, -1],
                     zoom: 4.5
                 });
 
@@ -64,7 +64,7 @@
                             cartocss: landCartoCSS
         },
                         {
-                            sql: "SELECT ST_Transform(the_geom, 2163) AS the_geom_webmercator, cartodb_id, uninsured FROM uninsured_adults_county",
+                            sql: "SELECT ST_Transform(the_geom, 2163) AS the_geom_webmercator, cartodb_id, uninsured FROM uninsured_adults_county_copy",
                             cartocss: $("#counties-styles").text()
         }
     ]

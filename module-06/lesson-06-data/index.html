@@ -1,27 +1,78 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>673 Module 06 CartoDB Starter Template</title>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
 
     <link rel="stylesheet" href="http://libs.cartocdn.com/cartodb.js/v3/3.15/themes/css/cartodb.css" />
-    
+
     <style>
-      html, body, #map {
-        height: 100%;
-        padding: 0;
-        margin: 0;
-      }
+        html,
+        body,
+        #map {
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
     </style>
 </head>
+
 <body>
-    
+
     <div id="map"></div>
 
     <script src="http://libs.cartocdn.com/cartodb.js/v3/3.15/cartodb.js"></script>
-    <script>
+    <script type="cartocss/html" id="counties-styles">
 
-    </script>
+        #uninsured_adults_county{ polygon-fill: #FFFFB2; polygon-opacity: 0.8; polygon-comp-op: lighten; line-color: #FFF; line-width: 0.5; line-opacity: 1; } #uninsured_adults_county [uninsured
+        <=5 2] { polygon-fill: #B10026; } #uninsured_adults_county [uninsured <=4 3] { polygon-fill: #E31A1C; } #uninsured_adults_county [uninsured <=3 6] { polygon-fill: #FC4E2A; } #uninsured_adults_county [uninsured <=3 0] { polygon-fill: #FD8D3C; } #uninsured_adults_county [uninsured <=2 3] { polygon-fill: #FEB24C; } #uninsured_adults_county [uninsured <=1 7] { polygon-fill: #FED976; } #uninsured_adults_county [uninsured <=1 0] { polygon-fill: #FFFFB2; } </script>
+
+
+
+            <script>
+                // instantiate our map
+                var map = new L.Map("map", {
+                    center: [40, -104],
+                    zoom: 4.5
+                });
+
+                var gratCartoCSS = '#na_grat_clipped{' +
+                    'line-color: #ffffff;' +
+                    'line-width: 2;' +
+                    'line-opacity: 0.1;' +
+                    '}'
+
+                var landCartoCSS = '#na_land_clipped{' +
+                    'polygon-fill: #323232;' +
+                    'polygon-opacity: 1;' +
+                    'line-color: #FFF;' +
+                    'line-width: 0;' +
+                    'line-opacity: 1;' +
+                    '}'
+
+                var sourceObject = {
+                    user_name: 'hlhyden1',
+                    type: 'cartodb',
+                    sublayers: [
+                        {
+                            sql: "SELECT ST_Transform(the_geom, 2163) AS the_geom_webmercator FROM na_grat_clipped",
+                            cartocss: gratCartoCSS
+        }, {
+                            sql: "SELECT ST_Transform(the_geom, 2163) AS the_geom_webmercator FROM na_land_clipped",
+                            cartocss: landCartoCSS
+        },
+                        {
+                            sql: "SELECT ST_Transform(the_geom, 2163) AS the_geom_webmercator, cartodb_id, uninsured FROM uninsured_adults_county",
+                            cartocss: $("#counties-styles").text()
+        }
+    ]
+                }
+
+
+                cartodb.createLayer(map, sourceObject).addTo(map);
+            </script>
 </body>
+
 </html>
